@@ -35,7 +35,7 @@ def deletefromfolder(path):
             os.remove(os.path.join(datadir, item))
 
 if __name__ == '__main__':
-    images_path = 'dataset/extracted_images/'
+    images_path = '../../dataset/extracted_images/'
     dirlist = os.listdir(images_path)
     for item in dirlist:
         deletefromfolder(os.path.join(images_path,item))
