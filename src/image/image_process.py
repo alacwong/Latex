@@ -1,8 +1,11 @@
 # image processing library
+# prepossess image before deploying to ML
 from PIL import Image
 import io
-input_length = 5
-input_width = 5
+import math
+
+input_length = 224
+input_width = 224
 
 
 def read_image(path: str):
@@ -38,10 +41,23 @@ def crop_img(image, bound):
                        int(bound.vertices[2].x * scale), int(bound.vertices[2].y) * scale))
 
 
-def img_resize(img):
+def img_resize(img, bound):
     """
     Resize image
-    :param img:
-    :return:
+    :param bound: bounding polynomial
+    :param img: image formatted in PIL
+    :return: image resized to input size for ml prediction
     """
-    print("resizing image")
+    width = bound.vertices[2].x - bound.vertices[0].x
+    length = bound.vertices[2].y - bound.vertices[0].y
+
+    ratio = min(input_width / width, input_length / length)
+
+    return img.resize((int(ratio*width), int(ratio*length)), Image.ANTIALIAS)
+
+# def merge(symbols):
+#     """
+#     Merge
+#     :return:
+#     """
+#
