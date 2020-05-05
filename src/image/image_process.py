@@ -3,10 +3,12 @@
 from PIL import Image
 import io
 from PIL import ImageDraw
+from _collections import deque
 import math
 
-input_length = 600
-input_width = 1000
+input_length = 224
+input_width = 224
+
 colors = [
     "#ff0000",
     "#ffa500",
@@ -17,6 +19,7 @@ colors = [
     "#ee82ee"
 ]
 RED, ORANGE, YELLOW, GREEN, BLUE, PURPLE, PINK = 0, 1, 2, 3, 4, 5, 6
+grid = {}
 
 
 def read_image(path: str):
@@ -55,7 +58,8 @@ def crop_img(image, bound):
 def img_resize(img, bound, min_symbol):
     """
     Resize image
-    :param bound: bounding polynomial
+    :param min_symbol: symbol to scale
+    :param bound: bounding polygon
     :param img: image formatted in PIL
     :return: image resized to input size for ml prediction
     """
@@ -64,15 +68,27 @@ def img_resize(img, bound, min_symbol):
 
     ratio = min(input_width / width, input_length / length)
 
-    return img.resize((int(ratio*width), int(ratio*length)), Image.ANTIALIAS)
+    return img.resize((int(ratio*(bound[2] - bound[0])), int(ratio*(bound[3] - bound[1]))), Image.ANTIALIAS)
 
 
-def merge(expression):
+def merge(cluster, image):
     """
-    Merge list of expression into one image
+    Merge list of clusters represented by 4 tuple into one image
+    e[i] = (x1, y1, x2, y2)
     :return:white image with expressions pasted on
     """
-    print(expression)
+    x = 0
+    y = 0
+    max_y = 0
+    canvas = Image.new('RGB', (800, 1200), (255, 255, 255))
+    q = deque()
+
+    for e in cluster:
+        if x + e[2] - e[1] > input_width:   # paste row
+            canvas.paste(image, (x, y, image.width, image.height))
+            if max_y < image.height:
+                max_y = image.height
+            q.append()
 
 
 def draw_boxes(image, bounds):
@@ -81,7 +97,7 @@ def draw_boxes(image, bounds):
     Order of images found is by color
     """
     draw = ImageDraw.Draw(image)
-    if bounds.normalized_vertices:
+    if bounds[0].normalized_vertices:
         width = image.width
         height = image.height
         for i in range(len(bounds)):
@@ -101,3 +117,4 @@ def draw_boxes(image, bounds):
                 bounds[i].vertices[3].x, bounds[i].vertices[3].y],
                 None, colors[i % len(colors)])
         return image
+
