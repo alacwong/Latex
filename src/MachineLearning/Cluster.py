@@ -64,8 +64,8 @@ def get_min_symbol(cluster_map, point_map):
             area_list = [util.area(point_map[point]) for point in cluster_map[label]]
             area_list.sort()
             min_symbol_map[label] = area_map[area_list[0]]
-    else:
-        min_symbol_map[label] = point_map[cluster_map[label]]
+        else:
+            min_symbol_map[label] = point_map[cluster_map[label]]
     return min_symbol_map
 
 
@@ -131,16 +131,13 @@ def compute_epsilon(blocks):
     Compute weighted average of nearest neighbor of blocks in data
     :return eps float between (0, 1):
     """
-    error = 1.5
-    total_words = 0
-    block_avg = []
+    error, total_words, block_avg, = 1.5, 0, []
     for block in blocks:
         word_list = []
         for paragraph in block.paragraph:
             for word in paragraph.words:
                 word_list.append(util.get_point(word))
-        # compute nearest NN matrix
-        dist_mat = []
+        dist_mat = []   # compute nearest NN matrix
         for i in range(len(word_list)):
             dist_list = []
             for j in range(len(word_list)):
