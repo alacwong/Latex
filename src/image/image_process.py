@@ -3,8 +3,6 @@
 from PIL import Image
 import io
 from PIL import ImageDraw
-from _collections import deque
-import math
 
 input_length = 224
 input_width = 224
@@ -55,7 +53,7 @@ def crop_img(image, bound):
                        int(bound.vertices[2].x * scale), int(bound.vertices[2].y) * scale))
 
 
-def img_resize(img, bound, min_symbol):
+def img_resize(img, min_symbol):
     """
     Resize image
     :param min_symbol: symbol to scale
@@ -68,27 +66,32 @@ def img_resize(img, bound, min_symbol):
 
     ratio = min(input_width / width, input_length / length)
 
-    return img.resize((int(ratio*(bound[2] - bound[0])), int(ratio*(bound[3] - bound[1]))), Image.ANTIALIAS)
+    return img.resize((int(ratio * img.width), int(ratio * img.height)), Image.ANTIALIAS)
 
 
-def merge(cluster, image):
+def merge(bound_map, min_symbol_map, eps, image):
     """
     Merge list of clusters represented by 4 tuple into one image
-    e[i] = (x1, y1, x2, y2)
+    Paste format: left, upper, right, and lower pixel  -> x1, y1, x2, y2
     :return:white image with expressions pasted on
     """
-    x = 0
-    y = 0
-    max_y = 0
-    canvas = Image.new('RGB', (800, 1200), (255, 255, 255))
-    q = deque()
+    x, y, max_y, canvas, images, scale = 0, 0, 0, Image.new('RGB', (800, 1200), (255, 255, 255)), [], []
+    for label in bound_map:
+        img = crop_img(image, bound_map[label])
+        images.append(img_resize(img, min_symbol_map[label]))
+        scale.append(images[-1].width / img.width)
+    eps = max(scale) * eps
+    for image in images:
+        if x + image.width + 4*eps > 800:   # next row
+            x = 0
+            y = max_y
+            max_y = 0
+        canvas.paste(image, (x + 2 * eps, y + 2 * eps, x + 2 * eps + image.width, image.height + 2 * eps + y))
+        if max_y < image.height + 2 * eps + y:
+            max_y = image.height + 2 * eps + y
+        x += 4 * eps + image.width
 
-    for e in cluster:
-        if x + e[2] - e[1] > input_width:   # paste row
-            canvas.paste(image, (x, y, image.width, image.height))
-            if max_y < image.height:
-                max_y = image.height
-            q.append()
+    return [canvas.crop(0, 0, 800, max(max_y, y)), eps]
 
 
 def draw_boxes(image, bounds):
@@ -117,4 +120,3 @@ def draw_boxes(image, bounds):
                 bounds[i].vertices[3].x, bounds[i].vertices[3].y],
                 None, colors[i % len(colors)])
         return image
-
