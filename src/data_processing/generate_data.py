@@ -19,6 +19,8 @@ def main():
     n = 9  # pick a perfect square
     # TODO distribute label on  test images
     data = distribute_data(labels, n)
+    annotations = paste(data)
+    # TODO save annotations to JSON so we can use it later for ML
 
 
 def distribute_data(labels, n):
